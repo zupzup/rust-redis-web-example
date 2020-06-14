@@ -1,0 +1,16 @@
+[package]
+name = "rust-redis-web-example"
+version = "0.1.0"
+authors = ["Mario Zupan <mario@zupzup.org>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "0.2", features = ["macros", "rt-threaded"] }
+warp = "0.2"
+redis = "0.16.0"
+r2d2_redis = "0.13.0"
+mobc-redis = "0.5.2"
+mobc = "0.5.10"
+thiserror = "1.0"
