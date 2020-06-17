@@ -15,10 +15,13 @@ const REDIS_CON_STRING: &str = "redis://127.0.0.1/";
 
 #[tokio::main]
 async fn main() {
+    let redis_client = redis::Client::open(REDIS_CON_STRING).expect("can create redis client");
     let mobc_pool = mobc_pool::connect().await.expect("can create mobc pool");
     let r2d2_pool = r2d2_pool::connect().expect("can create r2d2 pool");
 
-    let direct_route = warp::path!("direct").and_then(direct_handler);
+    let direct_route = warp::path!("direct")
+        .and(with_redis_client(redis_client.clone()))
+        .and_then(direct_handler);
 
     let mobc_route = warp::path!("mobc")
         .and(with_mobc_pool(mobc_pool.clone()))
@@ -50,8 +53,8 @@ async fn r2d2_handler(pool: R2D2Pool) -> WebResult<impl Reply> {
     Ok(value)
 }
 
-async fn direct_handler() -> WebResult<impl Reply> {
-    let mut con = direct::get_con()
+async fn direct_handler(client: redis::Client) -> WebResult<impl Reply> {
+    let mut con = direct::get_con(client)
         .await
         .map_err(|e| warp::reject::custom(e))?;
     direct::set_str(&mut con, "hello", "direct_world", 60)
@@ -61,6 +64,12 @@ async fn direct_handler() -> WebResult<impl Reply> {
         .await
         .map_err(|e| warp::reject::custom(e))?;
     Ok(value)
+}
+
+fn with_redis_client(
+    client: redis::Client,
+) -> impl Filter<Extract = (redis::Client,), Error = Infallible> + Clone {
+    warp::any().map(move || client.clone())
 }
 
 fn with_mobc_pool(

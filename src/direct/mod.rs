@@ -1,8 +1,7 @@
-use crate::{DirectError::*, Result, REDIS_CON_STRING};
+use crate::{DirectError::*, Result};
 use redis::{aio::Connection, AsyncCommands, FromRedisValue};
 
-pub async fn get_con() -> Result<Connection> {
-    let client = redis::Client::open(REDIS_CON_STRING).map_err(|e| RedisClientError(e))?;
+pub async fn get_con(client: redis::Client) -> Result<Connection> {
     client
         .get_async_connection()
         .await
